@@ -82,6 +82,14 @@ export interface SleepRecord extends BaseDocument {
   lowest_respiration_brpm: number;
   avg_overnight_hrv_ms: number;
   hrv_status: string;
+  source_file_name?: string;
+  source_format?: "csv";
+  source_period_label?: string;
+  source_period_start?: string;
+  source_period_end?: string;
+  sleep_need_min?: number;
+  avg_bedtime?: string;
+  avg_wake_time?: string;
 }
 
 export interface StressRecord extends BaseDocument {

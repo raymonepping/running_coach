@@ -80,13 +80,26 @@ export async function runAgentPipeline(
   );
 
   if (context.latestSleep) {
+    if (context.latestSleep.source_file_name) {
+      findings.push(
+        finding(
+          context,
+          "Import Normalization Agent",
+          "info",
+          "Sleep CSV normalized",
+          `${context.latestSleep.source_file_name} supplied aggregate sleep for ${context.latestSleep.source_period_label}: score ${context.latestSleep.sleep_score}, ${context.latestSleep.duration_min} minutes slept, and ${context.latestSleep.sleep_need_min ?? 0} minutes estimated need.`,
+          ["source_file_name", "source_period_label", "sleep_score", "duration_min", "sleep_need_min"]
+        )
+      );
+    }
+
     findings.push(
       finding(
         context,
         "Recovery Intelligence Agent",
         context.latestSleep.summary.toLowerCase().includes("non-restorative") ? "watch" : "info",
         "Recovery quality evaluated",
-        `Sleep duration was ${context.latestSleep.duration_min} minutes with ${context.latestSleep.quality.toLowerCase()} quality and ${context.latestSleep.summary.toLowerCase()} summary.`,
+        `Sleep duration was ${context.latestSleep.duration_min} minutes with ${context.latestSleep.quality.toLowerCase()} quality. Recovery summary: ${context.latestSleep.summary.toLowerCase()}.`,
         ["sleep_score", "duration_min", "summary", "hrv_status"]
       )
     );

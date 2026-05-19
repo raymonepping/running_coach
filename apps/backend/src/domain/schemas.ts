@@ -74,6 +74,11 @@ export const sleepImportSchema = importEnvelopeSchema.extend({
   hrv_status: z.string()
 });
 
+export const sleepCsvImportSchema = importEnvelopeSchema.extend({
+  file_name: z.string().min(1),
+  content: z.string().min(1).max(2_000_000)
+});
+
 export const stressImportSchema = importEnvelopeSchema.extend({
   overall_stress: z.number(),
   rest_min: z.number(),

@@ -38,10 +38,19 @@ export function useCoachApi() {
     });
   }
 
+  async function importSleepCsv(payload: { athlete_id: string; file_name: string; content: string }): Promise<void> {
+    await $fetch("/api/import/sleep-csv", {
+      baseURL: apiBaseUrl,
+      body: payload,
+      method: "POST"
+    });
+  }
+
   return {
     fetchDashboard,
     importActivityFile,
     importRecord,
+    importSleepCsv,
     reviewRecommendation
   };
 }

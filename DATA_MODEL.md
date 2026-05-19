@@ -37,6 +37,21 @@ GPX and TCX imports are stored as normalized `activity` documents in the `activi
 
 The raw file body is not persisted by default. The stored document keeps the derived coaching metrics and enough provenance for audit review.
 
+## Sleep CSV Metadata
+
+Garmin sleep CSV imports are stored as normalized `sleep` documents in the `sleep_records` collection. Each CSV row becomes one sleep record with the available aggregate fields and optional provenance metadata:
+
+- `source_file_name`
+- `source_format`
+- `source_period_label`
+- `source_period_start`
+- `source_period_end`
+- `sleep_need_min`
+- `avg_bedtime`
+- `avg_wake_time`
+
+The raw CSV body is not persisted by default. Garmin sleep summary CSVs do not include detailed sleep stages, HRV, SpO2, or overnight stress, so those fields remain `0` or `Unknown` until richer source data is imported.
+
 ## Audit Events
 
 Every autonomous action writes an audit event. Approval and rejection actions also write audit events with actor `coach`.

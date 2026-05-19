@@ -28,6 +28,14 @@ export interface SleepRecord {
   stress_rating: string;
   hrv_status: string;
   restless_moments: number;
+  source_file_name?: string;
+  source_format?: "csv";
+  source_period_label?: string;
+  source_period_start?: string;
+  source_period_end?: string;
+  sleep_need_min?: number;
+  avg_bedtime?: string;
+  avg_wake_time?: string;
 }
 
 export interface StressRecord {

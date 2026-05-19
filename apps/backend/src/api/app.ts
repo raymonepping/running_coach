@@ -8,6 +8,7 @@ import {
   activityImportSchema,
   recoveryImportSchema,
   sleepImportSchema,
+  sleepCsvImportSchema,
   stressImportSchema
 } from "../domain/schemas.js";
 import { createBaseDocument } from "../domain/documents.js";
@@ -84,6 +85,15 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const input = sleepImportSchema.parse(req.body);
       const result = await importService.importSleep(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/sleep-csv",
+    asyncRoute(async (req, res) => {
+      const input = sleepCsvImportSchema.parse(req.body);
+      const result = await importService.importSleepCsv(input);
       res.status(201).json(result);
     })
   );

@@ -9,6 +9,7 @@ import type {
 import { runAgentPipeline, type InsightGenerator } from "../agents/agentPipeline.js";
 import type { DataStore } from "../db/dataStore.js";
 import { parseActivityFile, type ActivityFileInput } from "./activityFileParser.js";
+import { parseSleepCsv, type SleepCsvInput } from "./sleepCsvParser.js";
 
 export class ImportService {
   constructor(
@@ -42,6 +43,28 @@ export class ImportService {
     return this.runAutonomousAgents(input.athlete_id);
   }
 
+  async importSleepCsv(input: SleepCsvInput): Promise<AgentRunResult> {
+    const records = parseSleepCsv(input);
+    for (const record of records) {
+      const document = {
+        ...createBaseDocument("sleep", input.athlete_id, "garmin_export"),
+        ...record
+      } as SleepRecord;
+      if (record.source_period_end) {
+        document.created_at = toEndOfDayIso(record.source_period_end);
+        document.updated_at = document.created_at;
+      }
+      await this.store.save("sleep_records", document);
+    }
+    await this.store.save("audit_events", {
+      ...createBaseDocument("audit_event", input.athlete_id, "system"),
+      action: "sleep_csv.imported",
+      actor: "system",
+      detail: `Imported ${records.length} Garmin sleep summary rows from ${input.file_name}.`
+    });
+    return this.runAutonomousAgents(input.athlete_id);
+  }
+
   async importStress(input: Omit<StressRecord, keyof ReturnType<typeof createBaseDocument>> & { athlete_id: string; source?: StressRecord["source"] }): Promise<AgentRunResult> {
     const document = { ...createBaseDocument("stress", input.athlete_id, input.source ?? "api"), ...input } as StressRecord;
     await this.store.save("stress_records", document);
@@ -69,4 +92,10 @@ export class ImportService {
     }
     return result;
   }
+}
+
+function toEndOfDayIso(value: string): string {
+  const date = new Date(value);
+  date.setUTCHours(23, 59, 59, 999);
+  return date.toISOString();
 }

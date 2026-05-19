@@ -4,7 +4,7 @@ import { samplePayloads, type ImportKind } from "~/data/samplePayloads";
 
 const route = useRoute();
 const router = useRouter();
-const { importActivityFile, importRecord } = useCoachApi();
+const { importActivityFile, importRecord, importSleepCsv } = useCoachApi();
 const { athleteId, loadDashboard } = useDashboardState();
 
 const validKinds: ImportKind[] = ["activity", "sleep", "stress", "recovery"];
@@ -96,6 +96,36 @@ async function importFile(event: Event) {
     input.value = "";
   }
 }
+
+async function importSleepFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    error.value = "Choose a Garmin sleep .csv file.";
+    status.value = undefined;
+    input.value = "";
+    return;
+  }
+
+  try {
+    selectedFileName.value = file.name;
+    await importSleepCsv({
+      athlete_id: athleteId,
+      content: await file.text(),
+      file_name: file.name
+    });
+    await loadDashboard();
+    status.value = `${file.name} imported. Sleep summaries were stored and autonomous agents have run.`;
+    error.value = undefined;
+  } catch (fileError) {
+    error.value = fileError instanceof Error ? fileError.message : "Sleep CSV import failed.";
+    status.value = undefined;
+  } finally {
+    input.value = "";
+  }
+}
 </script>
 
 <template>
@@ -113,6 +143,20 @@ async function importFile(event: Event) {
             <UploadCloud :size="18" />
             Choose file
             <input class="sr-only" type="file" accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml,text/xml" @change="importFile">
+          </label>
+        </div>
+      </div>
+      <div v-if="kind === 'sleep'" class="mb-5 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold text-neutral-950">Garmin sleep CSV</div>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Import Garmin sleep summary CSV exports. Yearly, monthly, and 7-day exports are accepted when they use the Garmin summary columns.</p>
+            <p v-if="selectedFileName" class="mt-2 text-sm font-semibold text-orange-800">{{ selectedFileName }}</p>
+          </div>
+          <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800">
+            <UploadCloud :size="18" />
+            Choose CSV
+            <input class="sr-only" type="file" accept=".csv,text/csv" @change="importSleepFile">
           </label>
         </div>
       </div>
