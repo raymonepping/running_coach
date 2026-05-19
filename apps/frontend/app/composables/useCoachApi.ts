@@ -25,8 +25,22 @@ export function useCoachApi() {
     });
   }
 
+  async function importActivityFile(payload: {
+    athlete_id: string;
+    file_name: string;
+    file_type: "gpx" | "tcx";
+    content: string;
+  }): Promise<void> {
+    await $fetch("/api/import/activity-file", {
+      baseURL: apiBaseUrl,
+      body: payload,
+      method: "POST"
+    });
+  }
+
   return {
     fetchDashboard,
+    importActivityFile,
     importRecord,
     reviewRecommendation
   };

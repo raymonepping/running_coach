@@ -11,6 +11,11 @@ export interface ActivityRecord {
   primary_benefit: string;
   aerobic_effect: number;
   anaerobic_effect: number;
+  source_file_name?: string;
+  source_format?: "gpx" | "tcx";
+  source_started_at?: string;
+  source_track_points?: number;
+  source_laps?: number;
 }
 
 export interface SleepRecord {

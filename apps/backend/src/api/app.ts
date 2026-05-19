@@ -3,7 +3,13 @@ import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { z } from "zod";
 import type { DataStore } from "../db/dataStore.js";
-import { activityImportSchema, recoveryImportSchema, sleepImportSchema, stressImportSchema } from "../domain/schemas.js";
+import {
+  activityFileImportSchema,
+  activityImportSchema,
+  recoveryImportSchema,
+  sleepImportSchema,
+  stressImportSchema
+} from "../domain/schemas.js";
 import { createBaseDocument } from "../domain/documents.js";
 import type { AuditEvent } from "../domain/types.js";
 import { ImportService } from "../services/importService.js";
@@ -48,7 +54,7 @@ export function createApp({ store, importService }: AppDependencies) {
 
   app.use(createCorsMiddleware(allowedOrigins));
   app.use(helmet());
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "8mb" }));
   app.use(pinoHttp({ logger }));
 
   app.get("/api/health", (_req, res) => {
@@ -60,6 +66,15 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const input = activityImportSchema.parse(req.body);
       const result = await importService.importActivity(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/activity-file",
+    asyncRoute(async (req, res) => {
+      const input = activityFileImportSchema.parse(req.body);
+      const result = await importService.importActivityFile(input);
       res.status(201).json(result);
     })
   );

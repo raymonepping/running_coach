@@ -7,6 +7,7 @@ This is not ChatGPT for runners. The primary workflow is event-driven: when acti
 ## What It Does
 
 - Imports Garmin-style activity, sleep, stress, and recovery JSON.
+- Imports Garmin GPX/TCX activity files, normalizes run metrics, and triggers agents automatically.
 - Stores JSON documents in Couchbase using one bucket, one scope, and domain collections.
 - Runs an autonomous agent pipeline after every import.
 - Uses rule-based readiness classification before any LLM summary.
@@ -53,6 +54,14 @@ curl -sS -X POST http://localhost:8080/api/import/stress \
   -H 'content-type: application/json' \
   --data @samples/stress.sample.json
 ```
+
+You can also import a Garmin activity file from the web UI:
+
+1. Open http://localhost:5173/import/activity
+2. Choose a `.tcx` or `.gpx` file.
+3. The backend stores a normalized `activity` document with source file metadata, writes audit events, and runs the agent pipeline.
+
+TCX is preferred when available because it usually contains lap, heart-rate, speed, cadence, and power fields. GPX is supported and derives distance from track coordinates.
 
 Then open:
 

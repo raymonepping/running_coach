@@ -4,8 +4,8 @@ import { samplePayloads, type ImportKind } from "~/data/samplePayloads";
 
 const route = useRoute();
 const router = useRouter();
-const { importRecord } = useCoachApi();
-const { loadDashboard } = useDashboardState();
+const { importActivityFile, importRecord } = useCoachApi();
+const { athleteId, loadDashboard } = useDashboardState();
 
 const validKinds: ImportKind[] = ["activity", "sleep", "stress", "recovery"];
 const kind = computed<ImportKind>(() => {
@@ -35,6 +35,7 @@ const copy: Record<ImportKind, { title: string; description: string }> = {
 const rawJson = ref("");
 const status = ref<string>();
 const error = ref<string>();
+const selectedFileName = ref<string>();
 
 function resetSample() {
   rawJson.value = JSON.stringify(samplePayloads[kind.value], null, 2);
@@ -62,12 +63,59 @@ async function submit() {
     status.value = undefined;
   }
 }
+
+async function importFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  const extension = file.name.split(".").at(-1)?.toLowerCase();
+  if (extension !== "gpx" && extension !== "tcx") {
+    error.value = "Choose a .gpx or .tcx file.";
+    status.value = undefined;
+    input.value = "";
+    return;
+  }
+
+  try {
+    selectedFileName.value = file.name;
+    const content = await file.text();
+    await importActivityFile({
+      athlete_id: athleteId,
+      content,
+      file_name: file.name,
+      file_type: extension
+    });
+    await loadDashboard();
+    status.value = `${file.name} imported. Activity was normalized, stored, and analyzed by the agents.`;
+    error.value = undefined;
+  } catch (fileError) {
+    error.value = fileError instanceof Error ? fileError.message : "File import failed.";
+    status.value = undefined;
+  } finally {
+    input.value = "";
+  }
+}
 </script>
 
 <template>
   <PageHeader :description="copy[kind].description" eyebrow="Signal ingestion" :title="copy[kind].title" />
   <section class="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
     <SignalPanel title="Import payload">
+      <div v-if="kind === 'activity'" class="mb-5 rounded-lg border border-orange-200 bg-orange-50 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold text-neutral-950">Garmin activity file</div>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Import a .tcx or .gpx run. TCX gives richer pace, lap, power, and heart-rate signals when available.</p>
+            <p v-if="selectedFileName" class="mt-2 text-sm font-semibold text-orange-800">{{ selectedFileName }}</p>
+          </div>
+          <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800">
+            <UploadCloud :size="18" />
+            Choose file
+            <input class="sr-only" type="file" accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml,text/xml" @change="importFile">
+          </label>
+        </div>
+      </div>
       <textarea
         v-model="rawJson"
         class="min-h-[520px] w-full resize-y rounded-lg border border-neutral-200 bg-neutral-950 p-4 font-mono text-sm leading-6 text-neutral-100 outline-none focus:border-orange-400"

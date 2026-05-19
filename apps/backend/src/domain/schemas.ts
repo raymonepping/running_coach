@@ -44,6 +44,12 @@ export const activityImportSchema = importEnvelopeSchema.extend({
   total_descent_m: z.number()
 });
 
+export const activityFileImportSchema = importEnvelopeSchema.extend({
+  file_name: z.string().min(1),
+  file_type: z.enum(["gpx", "tcx"]),
+  content: z.string().min(1).max(8_000_000)
+});
+
 export const sleepImportSchema = importEnvelopeSchema.extend({
   sleep_score: z.number(),
   quality: z.string(),

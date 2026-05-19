@@ -8,6 +8,7 @@ import type {
 } from "../domain/types.js";
 import { runAgentPipeline, type InsightGenerator } from "../agents/agentPipeline.js";
 import type { DataStore } from "../db/dataStore.js";
+import { parseActivityFile, type ActivityFileInput } from "./activityFileParser.js";
 
 export class ImportService {
   constructor(
@@ -18,6 +19,20 @@ export class ImportService {
   async importActivity(input: Omit<ActivityRecord, keyof ReturnType<typeof createBaseDocument>> & { athlete_id: string; source?: ActivityRecord["source"] }): Promise<AgentRunResult> {
     const document = { ...createBaseDocument("activity", input.athlete_id, input.source ?? "api"), ...input } as ActivityRecord;
     await this.store.save("activities", document);
+    return this.runAutonomousAgents(input.athlete_id);
+  }
+
+  async importActivityFile(input: ActivityFileInput): Promise<AgentRunResult> {
+    const activity = parseActivityFile(input);
+    const document = { ...createBaseDocument("activity", input.athlete_id, "garmin_export"), ...activity } as ActivityRecord;
+    await this.store.save("activities", document);
+    await this.store.save("audit_events", {
+      ...createBaseDocument("audit_event", input.athlete_id, "system"),
+      action: "activity_file.imported",
+      actor: "system",
+      target_id: document.id,
+      detail: `Imported ${input.file_type.toUpperCase()} file ${input.file_name} with ${document.source_track_points ?? 0} track points.`
+    });
     return this.runAutonomousAgents(input.athlete_id);
   }
 

@@ -52,6 +52,11 @@ export interface ActivityRecord extends BaseDocument {
   avg_gc_time_balance_right_pct: number;
   total_ascent_m: number;
   total_descent_m: number;
+  source_file_name?: string;
+  source_format?: "gpx" | "tcx";
+  source_started_at?: string;
+  source_track_points?: number;
+  source_laps?: number;
 }
 
 export interface SleepRecord extends BaseDocument {

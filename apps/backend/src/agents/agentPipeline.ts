@@ -53,6 +53,19 @@ export async function runAgentPipeline(
   const decision = evaluateReadiness(context);
   const findings: AgentFinding[] = [];
 
+  if (context.latestActivity?.source_file_name) {
+    findings.push(
+      finding(
+        context,
+        "Import Normalization Agent",
+        "info",
+        "Garmin file normalized",
+        `${context.latestActivity.source_file_name} was parsed as ${context.latestActivity.source_format?.toUpperCase()} with ${context.latestActivity.source_track_points ?? 0} track points, ${context.latestActivity.source_laps ?? 0} laps, ${context.latestActivity.distance_km} km, average heart rate ${context.latestActivity.avg_hr}, and average power ${context.latestActivity.avg_power_w} W.`,
+        ["source_file_name", "source_track_points", "source_laps", "distance_km", "avg_hr", "avg_power_w"]
+      )
+    );
+  }
+
   findings.push(
     finding(
       context,
@@ -60,9 +73,9 @@ export async function runAgentPipeline(
       "info",
       "Controlled aerobic session detected",
       context.latestActivity
-        ? `Run classified as ${context.latestActivity.primary_benefit} with aerobic effect ${context.latestActivity.aerobic_effect} and anaerobic effect ${context.latestActivity.anaerobic_effect}.`
+        ? `Run classified as ${context.latestActivity.primary_benefit} over ${context.latestActivity.distance_km} km with aerobic effect ${context.latestActivity.aerobic_effect}, anaerobic effect ${context.latestActivity.anaerobic_effect}, load ${context.latestActivity.exercise_load}, and average pace ${context.latestActivity.avg_pace_sec_per_km} sec/km.`
         : "No latest activity was available for classification.",
-      ["primary_benefit", "aerobic_effect", "anaerobic_effect"]
+      ["primary_benefit", "distance_km", "aerobic_effect", "anaerobic_effect", "exercise_load", "avg_pace_sec_per_km"]
     )
   );
 
