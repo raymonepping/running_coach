@@ -3,7 +3,7 @@
 The platform is split into clear service boundaries:
 
 - `apps/backend`: Express API, import service, agent pipeline, Vault integration, Couchbase persistence.
-- `apps/frontend`: React/Vite cockpit UI.
+- `apps/frontend`: Nuxt 4, Vue 3, Tailwind CSS cockpit UI.
 - `infra/couchbase`: local bucket, scope, collection, and index bootstrap.
 - `infra/vault`: AppRole, policy, KV, and transit bootstrap.
 - `samples`: sample Garmin-style JSON imports.

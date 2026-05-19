@@ -11,6 +11,7 @@ body {
   margin: 0;
 }
 
-button {
+button,
+textarea {
   font: inherit;
 }
