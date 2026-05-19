@@ -11,7 +11,11 @@ services:
     volumes:
       - couchbase_data:/opt/couchbase/var
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8091/pools"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS -u ${COUCHBASE_ADMINISTRATOR_USERNAME:-Administrator}:${COUCHBASE_ADMINISTRATOR_PASSWORD:-local-demo-password} http://localhost:8091/pools >/dev/null"
+        ]
       interval: 10s
       timeout: 5s
       retries: 30
