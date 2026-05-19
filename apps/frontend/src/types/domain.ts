@@ -1,8 +1,12 @@
 export type ReadinessState = "BUILD" | "MAINTAIN" | "RECOVER" | "REST";
 
 export interface ActivityRecord {
+  id?: string;
+  created_at?: string;
   distance_km: number;
+  avg_pace_sec_per_km?: number;
   avg_hr: number;
+  max_hr?: number;
   exercise_load: number;
   primary_benefit: string;
   aerobic_effect: number;
@@ -10,6 +14,8 @@ export interface ActivityRecord {
 }
 
 export interface SleepRecord {
+  id?: string;
+  created_at?: string;
   sleep_score: number;
   quality: string;
   duration_min: number;
@@ -20,6 +26,8 @@ export interface SleepRecord {
 }
 
 export interface StressRecord {
+  id?: string;
+  created_at?: string;
   overall_stress: number;
   rest_min: number;
   high_stress_min: number;
@@ -41,6 +49,8 @@ export interface Recommendation {
   coach_summary: string;
   athlete_explanation: string;
   status: "pending" | "approved" | "rejected";
+  rationale: string[];
+  created_at: string;
 }
 
 export interface AuditEvent {
