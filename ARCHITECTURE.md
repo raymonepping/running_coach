@@ -1,0 +1,34 @@
+# Architecture
+
+The platform is split into clear service boundaries:
+
+- `apps/backend`: Express API, import service, agent pipeline, Vault integration, Couchbase persistence.
+- `apps/frontend`: React/Vite cockpit UI.
+- `infra/couchbase`: local bucket, scope, collection, and index bootstrap.
+- `infra/vault`: AppRole, policy, KV, and transit bootstrap.
+- `samples`: sample Garmin-style JSON imports.
+
+## Event Flow
+
+1. Import endpoint receives a typed JSON payload.
+2. Backend validates payload with Zod.
+3. Record is stored in the matching Couchbase collection.
+4. Import service loads latest athlete context.
+5. Autonomous agent pipeline runs deterministic analysis.
+6. Findings, recommendation, and audit events are stored.
+7. UI reads dashboard state from the backend.
+8. Coach approves or rejects pending recommendation.
+
+## LLM Boundary
+
+Ollama is used only for explanation writing. Readiness state, risk signals, and suggested session are produced by deterministic rules first.
+
+## Persistence
+
+Couchbase uses:
+
+- Bucket: `running_coach`
+- Scope: `coach`
+- Collections: one collection per domain object.
+
+The backend uses Couchbase Query API over HTTP to avoid native SDK build requirements in local environments.

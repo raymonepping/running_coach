@@ -1,0 +1,9 @@
+{
+  "athlete_id": "demo-athlete",
+  "source": "sample",
+  "overall_stress": 29,
+  "rest_min": 613,
+  "low_stress_min": 351,
+  "medium_stress_min": 148,
+  "high_stress_min": 14
+}

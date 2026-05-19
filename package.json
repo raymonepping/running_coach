@@ -1,0 +1,21 @@
+{
+  "name": "running-coach",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first autonomous adaptation intelligence for running training.",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev:backend": "npm run dev -w apps/backend",
+    "dev:frontend": "npm run dev -w apps/frontend",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write .",
+    "test": "npm run test --workspaces"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

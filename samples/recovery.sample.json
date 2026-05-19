@@ -1,0 +1,7 @@
+{
+  "athlete_id": "demo-athlete",
+  "source": "sample",
+  "readiness_state": "MAINTAIN",
+  "subjective_readiness": "moderate",
+  "notes": "Legs feel normal, no unusual soreness."
+}

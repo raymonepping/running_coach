@@ -1,0 +1,176 @@
+services:
+  couchbase:
+    image: couchbase/server:community-7.6.2
+    container_name: running_coach_couchbase
+    ports:
+      - "8091-8096:8091-8096"
+      - "11210:11210"
+    environment:
+      COUCHBASE_ADMINISTRATOR_USERNAME: ${COUCHBASE_ADMINISTRATOR_USERNAME:-Administrator}
+      COUCHBASE_ADMINISTRATOR_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD:-local-demo-password}
+    volumes:
+      - couchbase_data:/opt/couchbase/var
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8091/pools"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks:
+      - data
+
+  couchbase-init:
+    image: couchbase/server:community-7.6.2
+    depends_on:
+      couchbase:
+        condition: service_healthy
+    environment:
+      COUCHBASE_HOST: couchbase
+      COUCHBASE_ADMINISTRATOR_USERNAME: ${COUCHBASE_ADMINISTRATOR_USERNAME:-Administrator}
+      COUCHBASE_ADMINISTRATOR_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD:-local-demo-password}
+      COUCHBASE_BUCKET: ${COUCHBASE_BUCKET:-running_coach}
+      COUCHBASE_SCOPE: ${COUCHBASE_SCOPE:-coach}
+    volumes:
+      - ./infra/couchbase:/infra/couchbase:ro
+    command: ["/bin/bash", "/infra/couchbase/init-couchbase.sh"]
+    networks:
+      - data
+
+  vault:
+    image: hashicorp/vault:1.17
+    container_name: running_coach_vault
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID:-local-root-token}
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    command: ["server", "-dev"]
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - security
+
+  vault-init:
+    image: hashicorp/vault:1.17
+    depends_on:
+      vault:
+        condition: service_healthy
+      couchbase-init:
+        condition: service_completed_successfully
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_DEV_ROOT_TOKEN_ID:-local-root-token}
+      COUCHBASE_ADMINISTRATOR_USERNAME: ${COUCHBASE_ADMINISTRATOR_USERNAME:-Administrator}
+      COUCHBASE_ADMINISTRATOR_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD:-local-demo-password}
+      VAULT_BACKEND_ROLE_ID: ${VAULT_BACKEND_ROLE_ID:-local-backend-role-id}
+      VAULT_BACKEND_SECRET_ID: ${VAULT_BACKEND_SECRET_ID:-local-backend-secret-id}
+      VAULT_AGENT_ROLE_ID: ${VAULT_AGENT_ROLE_ID:-local-agent-role-id}
+      VAULT_AGENT_SECRET_ID: ${VAULT_AGENT_SECRET_ID:-local-agent-secret-id}
+    volumes:
+      - ./infra/vault:/infra/vault:ro
+    command: ["/bin/sh", "/infra/vault/bootstrap.sh"]
+    networks:
+      - security
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: running_coach_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    networks:
+      - ai
+
+  ollama-model:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["ollama pull \"$${OLLAMA_MODEL}\""]
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ai
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: running_coach_backend
+    depends_on:
+      couchbase-init:
+        condition: service_completed_successfully
+      vault-init:
+        condition: service_completed_successfully
+      ollama-model:
+        condition: service_completed_successfully
+    environment:
+      PORT: 8080
+      COUCHBASE_CONNECTION_STRING: couchbase://couchbase
+      COUCHBASE_BUCKET: ${COUCHBASE_BUCKET:-running_coach}
+      COUCHBASE_SCOPE: ${COUCHBASE_SCOPE:-coach}
+      VAULT_ADDR: http://vault:8200
+      VAULT_BACKEND_ROLE_ID: ${VAULT_BACKEND_ROLE_ID:-local-backend-role-id}
+      VAULT_BACKEND_SECRET_ID: ${VAULT_BACKEND_SECRET_ID:-local-backend-secret-id}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app
+      - data
+      - security
+      - ai
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: running_coach_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    networks:
+      - app
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: running_coach_mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - app
+
+volumes:
+  couchbase_data:
+  ollama_data:
+
+networks:
+  app:
+  data:
+  security:
+  ai:
