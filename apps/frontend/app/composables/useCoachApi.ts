@@ -2,7 +2,7 @@ import type { DashboardData, Recommendation } from "~/types/domain";
 
 export function useCoachApi() {
   const config = useRuntimeConfig();
-  const apiBaseUrl = config.public.apiBaseUrl;
+  const apiBaseUrl = import.meta.server ? config.apiInternalBaseUrl : config.public.apiBaseUrl;
 
   async function fetchDashboard(athleteId: string): Promise<DashboardData> {
     return await $fetch<DashboardData>(`/api/athletes/${athleteId}/dashboard`, {

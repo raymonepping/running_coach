@@ -20,8 +20,33 @@ function asyncRoute(handler: (req: Request, res: Response) => Promise<void>) {
   };
 }
 
+function createCorsMiddleware(allowedOrigins: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const origin = req.header("origin");
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header("Access-Control-Allow-Origin", origin);
+      res.header("Vary", "Origin");
+      res.header("Access-Control-Allow-Headers", "Content-Type");
+      res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    }
+
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+
+    next();
+  };
+}
+
 export function createApp({ store, importService }: AppDependencies) {
   const app = express();
+  const allowedOrigins = (process.env.FRONTEND_ORIGINS ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(createCorsMiddleware(allowedOrigins));
   app.use(helmet());
   app.use(express.json({ limit: "1mb" }));
   app.use(pinoHttp({ logger }));
