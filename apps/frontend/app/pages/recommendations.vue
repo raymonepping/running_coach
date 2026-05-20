@@ -3,10 +3,19 @@ import { Check, X } from "@lucide/vue";
 
 const { dashboard, loadDashboard } = useDashboardState();
 const { reviewRecommendation } = useCoachApi();
+const reviewingId = ref<string>();
 
 async function review(id: string, action: "approve" | "reject") {
-  await reviewRecommendation(id, action);
-  await loadDashboard();
+  const recommendation = dashboard.value?.recommendations.find((item) => item.id === id);
+  if (!recommendation || recommendation.status !== "pending" || reviewingId.value) return;
+  reviewingId.value = id;
+  try {
+    recommendation.status = action === "approve" ? "approved" : "rejected";
+    await reviewRecommendation(id, action);
+    await loadDashboard();
+  } finally {
+    reviewingId.value = undefined;
+  }
 }
 </script>
 
@@ -30,12 +39,12 @@ async function review(id: string, action: "approve" | "reject") {
           {{ item }}
         </li>
       </ul>
-      <div class="mt-4 flex flex-wrap gap-3">
-        <ActionButton @click="review(recommendation.id, 'approve')">
+      <div v-if="recommendation.status === 'pending'" class="mt-4 flex flex-wrap gap-3">
+        <ActionButton :disabled="reviewingId === recommendation.id" @click="review(recommendation.id, 'approve')">
           <template #icon><Check :size="18" /></template>
           Approve
         </ActionButton>
-        <ActionButton tone="secondary" @click="review(recommendation.id, 'reject')">
+        <ActionButton :disabled="reviewingId === recommendation.id" tone="secondary" @click="review(recommendation.id, 'reject')">
           <template #icon><X :size="18" /></template>
           Reject
         </ActionButton>

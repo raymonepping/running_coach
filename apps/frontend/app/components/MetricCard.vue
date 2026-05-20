@@ -7,7 +7,10 @@ defineProps<{
 </script>
 
 <template>
-  <section class="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+  <section
+    class="relative overflow-hidden rounded-lg border border-white/70 bg-white/70 p-4 shadow-[0_18px_50px_rgba(20,20,20,0.07)] backdrop-blur-xl ring-1 ring-neutral-950/[0.03]"
+  >
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-500 via-yellow-300 to-transparent" />
     <div class="mb-4 flex items-center justify-between text-neutral-500">
       <span class="text-sm font-medium">{{ label }}</span>
       <slot name="icon" />

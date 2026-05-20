@@ -35,7 +35,9 @@ const navigation: Array<{ label: string; path: string; icon: Component }> = [
 
 <template>
   <aside class="lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:w-72">
-    <div class="flex h-full flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+    <div
+      class="flex h-full flex-col rounded-lg border border-white/70 bg-white/80 p-4 shadow-[0_20px_70px_rgba(20,20,20,0.09)] backdrop-blur-xl ring-1 ring-neutral-950/[0.03]"
+    >
       <div class="flex items-center gap-3 border-b border-neutral-100 pb-4">
         <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-neutral-950 text-yellow-300">
           <Import :size="22" />

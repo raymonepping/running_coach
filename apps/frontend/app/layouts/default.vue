@@ -7,7 +7,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-[#f6f5f2] text-neutral-950">
+  <main class="min-h-screen bg-[linear-gradient(135deg,#fffaf0_0%,#f6f5f2_42%,#eef1f3_100%)] text-neutral-950">
     <div class="mx-auto flex max-w-[1500px] flex-col gap-5 px-4 py-4 sm:px-6 lg:flex-row lg:px-8">
       <AppNavigation :dashboard="dashboard" />
       <section class="min-w-0 flex-1">
