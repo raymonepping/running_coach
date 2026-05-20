@@ -121,6 +121,19 @@ export async function runAgentPipeline(
     );
   }
 
+  if (context.latestHeartRate && !context.latestStress?.resting_hr_bpm) {
+    findings.push(
+      finding(
+        context,
+        "Stress Correlation Agent",
+        context.latestHeartRate.heart_rate_pressure === "normal" ? "info" : "watch",
+        "Heart-rate pressure correlated",
+        `Resting heart rate was ${context.latestHeartRate.resting_hr_bpm} bpm, daily high was ${context.latestHeartRate.high_hr_bpm} bpm, and pressure classified as ${context.latestHeartRate.heart_rate_pressure}.`,
+        ["resting_hr_bpm", "high_hr_bpm", "heart_rate_pressure"]
+      )
+    );
+  }
+
   for (const signal of decision.riskSignals) {
     findings.push(finding(context, "Injury Risk Agent", "risk", "Risk signal detected", signal, ["stamina", "gct_balance"]));
   }

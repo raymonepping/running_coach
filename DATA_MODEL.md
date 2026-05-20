@@ -16,6 +16,7 @@ Every document includes:
 - `activities`
 - `sleep_records`
 - `stress_records`
+- `heart_records`
 - `recovery_snapshots`
 - `agent_findings`
 - `recommendations`
@@ -71,6 +72,14 @@ When a heart-rate CSV is imported together with stress, rows are joined by `sour
 - `source_heart_file_name`
 
 The raw CSV bodies are not persisted by default.
+
+Date-based CSV records use deterministic document IDs so repeated imports replace the existing row:
+
+- Sleep daily row: `<athlete_id>:sleep:<yyyy-mm-dd>`
+- Stress row: `<athlete_id>:stress:<yyyy-mm-dd>`
+- Heart-rate row: `<athlete_id>:heart:<yyyy-mm-dd>`
+
+Aggregate sleep period rows use `<athlete_id>:sleep-period:<start>:<end>` to avoid overwriting richer daily sleep records for the same end date.
 
 ## Audit Events
 

@@ -4,6 +4,7 @@ import type {
   AthleteContext,
   AuditEvent,
   BaseDocument,
+  HeartRateRecord,
   Recommendation,
   SleepRecord,
   StressRecord
@@ -14,6 +15,7 @@ export type CollectionName =
   | "activities"
   | "sleep_records"
   | "stress_records"
+  | "heart_records"
   | "recovery_snapshots"
   | "agent_findings"
   | "recommendations"
@@ -24,6 +26,7 @@ export interface DashboardData {
   latestActivity?: ActivityRecord;
   latestSleep?: SleepRecord;
   latestStress?: StressRecord;
+  latestHeartRate?: HeartRateRecord;
   latestRecommendation?: Recommendation;
   findings: AgentFinding[];
   recommendations: Recommendation[];

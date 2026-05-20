@@ -4,6 +4,7 @@ import type {
   AthleteContext,
   AuditEvent,
   BaseDocument,
+  HeartRateRecord,
   Recommendation,
   SleepRecord,
   StressRecord
@@ -15,7 +16,12 @@ export class MemoryStore implements DataStore {
 
   async save<T extends BaseDocument>(collection: CollectionName, document: T): Promise<T> {
     const items = this.collections.get(collection) ?? [];
-    items.push(document);
+    const existingIndex = items.findIndex((item) => item.id === document.id);
+    if (existingIndex >= 0) {
+      items[existingIndex] = document;
+    } else {
+      items.push(document);
+    }
     this.collections.set(collection, items);
     return document;
   }
@@ -25,7 +31,8 @@ export class MemoryStore implements DataStore {
       athleteId,
       latestActivity: this.latest<ActivityRecord>("activities", athleteId),
       latestSleep: this.latest<SleepRecord>("sleep_records", athleteId),
-      latestStress: this.latest<StressRecord>("stress_records", athleteId)
+      latestStress: this.latest<StressRecord>("stress_records", athleteId),
+      latestHeartRate: this.latest<HeartRateRecord>("heart_records", athleteId)
     };
   }
 
@@ -38,6 +45,7 @@ export class MemoryStore implements DataStore {
       latestActivity: context.latestActivity,
       latestSleep: context.latestSleep,
       latestStress: context.latestStress,
+      latestHeartRate: context.latestHeartRate,
       latestRecommendation: recommendations[0],
       findings,
       recommendations,

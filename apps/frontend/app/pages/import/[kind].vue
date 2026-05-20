@@ -4,10 +4,10 @@ import { samplePayloads, type ImportKind } from "~/data/samplePayloads";
 
 const route = useRoute();
 const router = useRouter();
-const { importActivityFile, importRecord, importSleepCsv, importStressCsv, importStressHeartCsv } = useCoachApi();
+const { importActivityFile, importHeartCsv, importRecord, importSleepCsv, importStressCsv, importStressHeartCsv } = useCoachApi();
 const { athleteId, loadDashboard } = useDashboardState();
 
-const validKinds: ImportKind[] = ["activity", "sleep", "stress", "recovery"];
+const validKinds: ImportKind[] = ["activity", "sleep", "stress", "heart", "recovery"];
 const kind = computed<ImportKind>(() => {
   const value = route.params.kind;
   return validKinds.includes(value as ImportKind) ? (value as ImportKind) : "activity";
@@ -25,6 +25,10 @@ const copy: Record<ImportKind, { title: string; description: string }> = {
   stress: {
     title: "Stress import",
     description: "Import daily stress pressure to correlate adaptation load with recovery capacity."
+  },
+  heart: {
+    title: "Heart rate import",
+    description: "Import resting and daily high heart-rate signals to detect recovery pressure."
   },
   recovery: {
     title: "Recovery snapshot import",
@@ -159,6 +163,36 @@ async function importStressFile(event: Event) {
   }
 }
 
+async function importHeartFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    error.value = "Choose a Garmin heart-rate .csv file.";
+    status.value = undefined;
+    input.value = "";
+    return;
+  }
+
+  try {
+    selectedFileName.value = file.name;
+    await importHeartCsv({
+      athlete_id: athleteId,
+      content: await file.text(),
+      file_name: file.name
+    });
+    await loadDashboard();
+    status.value = `${file.name} imported. Heart-rate rows were stored uniquely by date and autonomous agents have run.`;
+    error.value = undefined;
+  } catch (fileError) {
+    error.value = fileError instanceof Error ? fileError.message : "Heart-rate CSV import failed.";
+    status.value = undefined;
+  } finally {
+    input.value = "";
+  }
+}
+
 function selectStressPairFile(event: Event, target: "stress" | "heart") {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -269,6 +303,20 @@ async function importStressHeartFiles() {
             </label>
             <ActionButton @click="importStressHeartFiles">Import pair</ActionButton>
           </div>
+        </div>
+      </div>
+      <div v-if="kind === 'heart'" class="mb-5 rounded-lg border border-orange-200 bg-orange-50 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold text-neutral-950">Garmin heart-rate CSV</div>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Import daily resting and high heart-rate rows. Dates are stored uniquely, so re-imports replace existing rows.</p>
+            <p v-if="selectedFileName" class="mt-2 text-sm font-semibold text-orange-800">{{ selectedFileName }}</p>
+          </div>
+          <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800">
+            <UploadCloud :size="18" />
+            Choose CSV
+            <input class="sr-only" type="file" accept=".csv,text/csv" @change="importHeartFile">
+          </label>
         </div>
       </div>
       <textarea

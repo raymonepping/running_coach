@@ -1,6 +1,7 @@
-import type { StressRecord } from "../domain/types.js";
+import type { HeartRateRecord, StressRecord } from "../domain/types.js";
 
 type StressImport = Omit<StressRecord, "id" | "type" | "created_at" | "updated_at" | "schema_version">;
+type HeartImport = Omit<HeartRateRecord, "id" | "type" | "created_at" | "updated_at" | "schema_version">;
 
 export interface StressCsvInput {
   athlete_id: string;
@@ -18,6 +19,13 @@ export interface StressHeartCsvInput {
   heart_content: string;
 }
 
+export interface HeartCsvInput {
+  athlete_id: string;
+  source?: HeartRateRecord["source"];
+  file_name: string;
+  content: string;
+}
+
 interface GarminStressCsvRow {
   Date: string;
   Average: string;
@@ -31,12 +39,6 @@ interface GarminHeartCsvRow {
   Date: string;
   Resting: string;
   High: string;
-}
-
-interface HeartImport {
-  source_date: string;
-  resting_hr_bpm: number;
-  high_hr_bpm: number;
 }
 
 export function parseStressCsv(input: StressCsvInput): StressImport[] {
@@ -56,8 +58,10 @@ export function parseStressHeartCsv(input: StressHeartCsvInput): StressImport[] 
     source: input.source
   });
   const heartRecords = parseHeartCsv({
+    athlete_id: input.athlete_id,
     content: input.heart_content,
-    file_name: input.heart_file_name
+    file_name: input.heart_file_name,
+    source: input.source
   });
   const heartByDate = new Map(heartRecords.map((record) => [record.source_date, record]));
 
@@ -67,10 +71,32 @@ export function parseStressHeartCsv(input: StressHeartCsvInput): StressImport[] 
 
     return {
       ...record,
-      heart_rate_pressure: classifyHeartRatePressure(heart),
+      heart_rate_pressure: heart.heart_rate_pressure,
       high_hr_bpm: heart.high_hr_bpm,
       resting_hr_bpm: heart.resting_hr_bpm,
       source_heart_file_name: input.heart_file_name
+    };
+  });
+}
+
+export function parseHeartCsv(input: HeartCsvInput): HeartImport[] {
+  const rows = parseCsv(input.content).map(toGarminHeartRow);
+  if (rows.length === 0) {
+    throw new Error("Heart CSV does not contain data rows.");
+  }
+
+  return rows.map((row) => {
+    const restingHr = numberFrom(row.Resting);
+    const highHr = numberFrom(row.High);
+    return {
+      athlete_id: input.athlete_id,
+      heart_rate_pressure: classifyHeartRatePressure(restingHr, highHr),
+      high_hr_bpm: highHr,
+      resting_hr_bpm: restingHr,
+      source: input.source ?? "garmin_export",
+      source_date: parseDate(row.Date),
+      source_file_name: input.file_name,
+      source_format: "csv"
     };
   });
 }
@@ -109,20 +135,6 @@ function toStressImport(input: StressCsvInput, row: GarminStressCsvRow): StressI
     source_format: "csv",
     source_date: date
   };
-}
-
-function parseHeartCsv(input: Pick<StressHeartCsvInput, "heart_content" | "heart_file_name"> | { content: string; file_name: string }): HeartImport[] {
-  const content = "content" in input ? input.content : input.heart_content;
-  const rows = parseCsv(content).map(toGarminHeartRow);
-  if (rows.length === 0) {
-    throw new Error("Heart CSV does not contain data rows.");
-  }
-
-  return rows.map((row) => ({
-    high_hr_bpm: numberFrom(row.High),
-    resting_hr_bpm: numberFrom(row.Resting),
-    source_date: parseDate(row.Date)
-  }));
 }
 
 function toGarminHeartRow(row: Record<string, string>): GarminHeartCsvRow {
@@ -214,9 +226,9 @@ function ratio(value: number, total: number): number {
   return Math.round((value / total) * 1000) / 1000;
 }
 
-function classifyHeartRatePressure(record: HeartImport): string {
-  if (record.resting_hr_bpm >= 65 && record.high_hr_bpm >= 180) return "elevated_resting_and_high_peak";
-  if (record.resting_hr_bpm >= 65) return "elevated_resting";
-  if (record.high_hr_bpm >= 180) return "high_peak";
+function classifyHeartRatePressure(restingHr: number, highHr: number): string {
+  if (restingHr >= 65 && highHr >= 180) return "elevated_resting_and_high_peak";
+  if (restingHr >= 65) return "elevated_resting";
+  if (highHr >= 180) return "high_peak";
   return "normal";
 }

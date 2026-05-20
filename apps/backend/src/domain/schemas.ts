@@ -99,6 +99,17 @@ export const stressHeartCsvImportSchema = importEnvelopeSchema.extend({
   heart_content: z.string().min(1).max(2_000_000)
 });
 
+export const heartCsvImportSchema = importEnvelopeSchema.extend({
+  file_name: z.string().min(1),
+  content: z.string().min(1).max(2_000_000)
+});
+
+export const heartImportSchema = importEnvelopeSchema.extend({
+  resting_hr_bpm: z.number(),
+  high_hr_bpm: z.number(),
+  heart_rate_pressure: z.string().default("normal")
+});
+
 export const recoveryImportSchema = importEnvelopeSchema.extend({
   readiness_state: z.enum(["BUILD", "MAINTAIN", "RECOVER", "REST"]).default("MAINTAIN"),
   subjective_readiness: z.enum(["low", "moderate", "high"]).optional(),

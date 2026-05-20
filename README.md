@@ -80,6 +80,14 @@ Garmin stress and heart-rate CSV exports can be imported from the web UI:
 
 The paired import is the better coaching signal because it can distinguish ordinary stress distribution from stress combined with elevated resting heart-rate pressure.
 
+Heart-rate CSV can also be imported separately:
+
+1. Open http://localhost:5173/import/heart
+2. Choose the Garmin CSV with `Date`, `Resting`, and `High` columns.
+3. The backend stores one `heart_rate` document per day and runs the agent pipeline.
+
+Sleep, stress, and heart-rate CSV imports use date-based document IDs, so importing the same day twice replaces the existing row instead of creating duplicates.
+
 Then open:
 
 ```bash

@@ -4,6 +4,7 @@ import type {
   AthleteContext,
   AuditEvent,
   BaseDocument,
+  HeartRateRecord,
   Recommendation,
   SleepRecord,
   StressRecord
@@ -53,7 +54,8 @@ export class CouchbaseStore implements DataStore {
       athleteId,
       latestActivity: await this.latest<ActivityRecord>("activities", athleteId),
       latestSleep: await this.latest<SleepRecord>("sleep_records", athleteId),
-      latestStress: await this.latest<StressRecord>("stress_records", athleteId)
+      latestStress: await this.latest<StressRecord>("stress_records", athleteId),
+      latestHeartRate: await this.latest<HeartRateRecord>("heart_records", athleteId)
     };
   }
 
@@ -66,6 +68,7 @@ export class CouchbaseStore implements DataStore {
       latestActivity: context.latestActivity,
       latestSleep: context.latestSleep,
       latestStress: context.latestStress,
+      latestHeartRate: context.latestHeartRate,
       latestRecommendation: recommendations[0],
       findings,
       recommendations,

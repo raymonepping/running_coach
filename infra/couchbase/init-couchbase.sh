@@ -35,7 +35,7 @@ sleep 8
 
 couchbase-cli collection-manage -c "$HOST" -u "$USER" -p "$PASSWORD" --bucket "$BUCKET" --create-scope "$SCOPE" || true
 
-for collection in athlete_profiles activities sleep_records stress_records recovery_snapshots agent_findings recommendations audit_events; do
+for collection in athlete_profiles activities sleep_records stress_records heart_records recovery_snapshots agent_findings recommendations audit_events; do
   couchbase-cli collection-manage \
     -c "$HOST" \
     -u "$USER" \
@@ -44,7 +44,7 @@ for collection in athlete_profiles activities sleep_records stress_records recov
     --create-collection "$SCOPE.$collection" || true
 done
 
-for collection in activities sleep_records stress_records agent_findings recommendations audit_events; do
+for collection in activities sleep_records stress_records heart_records agent_findings recommendations audit_events; do
   cbq -e "http://$HOST:8091" -u "$USER" -p "$PASSWORD" \
     --script="CREATE PRIMARY INDEX IF NOT EXISTS ON \`$BUCKET\`.\`$SCOPE\`.\`$collection\`;"
 done

@@ -20,4 +20,29 @@ describe("import to autonomous recommendation flow", () => {
     expect(dashboard.findings.length).toBeGreaterThan(0);
     expect(dashboard.auditEvents.length).toBeGreaterThan(0);
   });
+
+  it("replaces date-keyed CSV records when re-imported", async () => {
+    const store = new MemoryStore();
+    const importService = new ImportService(store);
+
+    await importService.importHeartCsv({
+      athlete_id: "demo-athlete",
+      content: `Date;Resting;High
+19/May;62 bpm;112 bpm`,
+      file_name: "Heart.csv"
+    });
+    await importService.importHeartCsv({
+      athlete_id: "demo-athlete",
+      content: `Date;Resting;High
+19/May;64 bpm;120 bpm`,
+      file_name: "Heart.csv"
+    });
+
+    const dashboard = await store.getDashboard("demo-athlete");
+    expect(dashboard.latestHeartRate).toMatchObject({
+      id: "demo-athlete:heart:2026-05-19",
+      resting_hr_bpm: 64,
+      high_hr_bpm: 120
+    });
+  });
 });

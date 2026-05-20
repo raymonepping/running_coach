@@ -50,10 +50,12 @@ async function reviewLatest(action: "approve" | "reject") {
       :detail="
         dashboard?.latestStress
           ? `${dashboard.latestStress.stress_load_min ?? dashboard.latestStress.high_stress_min} medium/high minutes, ${dashboard.latestStress.rest_min} rest minutes${dashboard.latestStress.resting_hr_bpm ? `, resting HR ${dashboard.latestStress.resting_hr_bpm}.` : '.'}`
-          : 'Import stress data to correlate adaptation pressure.'
+          : dashboard?.latestHeartRate
+            ? `Resting HR ${dashboard.latestHeartRate.resting_hr_bpm}, high ${dashboard.latestHeartRate.high_hr_bpm}, pressure ${dashboard.latestHeartRate.heart_rate_pressure}.`
+            : 'Import stress data to correlate adaptation pressure.'
       "
       label="Stress load"
-      :value="dashboard?.latestStress ? `${dashboard.latestStress.overall_stress}` : 'No data'"
+      :value="dashboard?.latestStress ? `${dashboard.latestStress.overall_stress}` : dashboard?.latestHeartRate ? `${dashboard.latestHeartRate.resting_hr_bpm} bpm` : 'No data'"
     >
       <template #icon><Flame :size="20" class="text-orange-500" /></template>
     </MetricCard>

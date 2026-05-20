@@ -17,7 +17,7 @@ export function useCoachApi() {
     });
   }
 
-  async function importRecord(kind: "activity" | "sleep" | "stress" | "recovery", payload: unknown): Promise<void> {
+  async function importRecord(kind: "activity" | "sleep" | "stress" | "heart" | "recovery", payload: unknown): Promise<void> {
     await $fetch(`/api/import/${kind}`, {
       baseURL: apiBaseUrl,
       body: payload,
@@ -54,6 +54,14 @@ export function useCoachApi() {
     });
   }
 
+  async function importHeartCsv(payload: { athlete_id: string; file_name: string; content: string }): Promise<void> {
+    await $fetch("/api/import/heart-csv", {
+      baseURL: apiBaseUrl,
+      body: payload,
+      method: "POST"
+    });
+  }
+
   async function importStressHeartCsv(payload: {
     athlete_id: string;
     heart_content: string;
@@ -71,6 +79,7 @@ export function useCoachApi() {
   return {
     fetchDashboard,
     importActivityFile,
+    importHeartCsv,
     importRecord,
     importSleepCsv,
     importStressHeartCsv,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStressCsv, parseStressHeartCsv } from "../src/services/stressCsvParser.js";
+import { parseHeartCsv, parseStressCsv, parseStressHeartCsv } from "../src/services/stressCsvParser.js";
 
 describe("parseStressCsv", () => {
   it("should parse Garmin stress CSV with semicolon delimiter", () => {
@@ -82,5 +82,27 @@ describe("parseStressCsv", () => {
       resting_hr_bpm: 62,
       source_heart_file_name: "Heart.csv"
     });
+  });
+
+  it("normalizes Garmin heart-rate CSV rows", () => {
+    const heartContent = `Date;Resting;High
+19/May;62 bpm;112 bpm
+15/May;68 bpm;187 bpm`;
+
+    const result = parseHeartCsv({
+      athlete_id: "test-athlete",
+      content: heartContent,
+      file_name: "Heart.csv"
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      heart_rate_pressure: "normal",
+      high_hr_bpm: 112,
+      resting_hr_bpm: 62,
+      source_date: "2026-05-19T00:00:00.000Z",
+      source_file_name: "Heart.csv"
+    });
+    expect(result[1].heart_rate_pressure).toBe("elevated_resting_and_high_peak");
   });
 });

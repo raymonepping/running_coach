@@ -111,6 +111,16 @@ export interface StressRecord extends BaseDocument {
   source_date?: string;
 }
 
+export interface HeartRateRecord extends BaseDocument {
+  type: "heart_rate";
+  resting_hr_bpm: number;
+  high_hr_bpm: number;
+  heart_rate_pressure: string;
+  source_file_name?: string;
+  source_format?: "csv";
+  source_date?: string;
+}
+
 export interface RecoverySnapshot extends BaseDocument {
   type: "recovery_snapshot";
   readiness_state: ReadinessState;
@@ -150,6 +160,7 @@ export interface AthleteContext {
   latestActivity?: ActivityRecord;
   latestSleep?: SleepRecord;
   latestStress?: StressRecord;
+  latestHeartRate?: HeartRateRecord;
   latestRecovery?: RecoverySnapshot;
 }
 

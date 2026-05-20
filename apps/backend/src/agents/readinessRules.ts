@@ -30,7 +30,7 @@ function hasInjuryRisk(activity?: ActivityRecord): boolean {
 }
 
 export function evaluateReadiness(context: AthleteContext): ReadinessDecision {
-  const { latestActivity, latestSleep, latestStress } = context;
+  const { latestActivity, latestHeartRate, latestSleep, latestStress } = context;
   const rationale: string[] = [];
   const riskSignals: string[] = [];
 
@@ -38,7 +38,8 @@ export function evaluateReadiness(context: AthleteContext): ReadinessDecision {
   const highOvernightStress = isPoor(latestSleep?.stress_rating) || (latestSleep?.stress_avg ?? 0) >= 45;
   const highDayStress = (latestStress?.overall_stress ?? 0) >= 45 || (latestStress?.high_stress_min ?? 0) >= 60 || (latestStress?.stress_load_min ?? 0) >= 360;
   const lowDayStress = (latestStress?.overall_stress ?? 100) <= 30 && (latestStress?.high_stress_min ?? 100) <= 20;
-  const heartPressure = latestStress?.heart_rate_pressure === "elevated_resting" || latestStress?.heart_rate_pressure === "elevated_resting_and_high_peak";
+  const heartRatePressure = latestStress?.heart_rate_pressure ?? latestHeartRate?.heart_rate_pressure;
+  const heartPressure = heartRatePressure === "elevated_resting" || heartRatePressure === "elevated_resting_and_high_peak";
   const balancedHrv = latestSleep?.hrv_status.toLowerCase() === "balanced";
   const goodSleep = isGood(latestSleep?.quality) && !isNonRestorative(latestSleep?.summary);
   const injuryRisk = hasInjuryRisk(latestActivity);

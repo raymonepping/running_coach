@@ -56,6 +56,17 @@ export interface StressRecord {
   source_date?: string;
 }
 
+export interface HeartRateRecord {
+  id?: string;
+  created_at?: string;
+  resting_hr_bpm: number;
+  high_hr_bpm: number;
+  heart_rate_pressure: string;
+  source_file_name?: string;
+  source_format?: "csv";
+  source_date?: string;
+}
+
 export interface AgentFinding {
   id: string;
   agent_name: string;
@@ -89,6 +100,7 @@ export interface DashboardData {
   latestActivity?: ActivityRecord;
   latestSleep?: SleepRecord;
   latestStress?: StressRecord;
+  latestHeartRate?: HeartRateRecord;
   latestRecommendation?: Recommendation;
   findings: AgentFinding[];
   recommendations: Recommendation[];

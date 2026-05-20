@@ -6,6 +6,8 @@ import type { DataStore } from "../db/dataStore.js";
 import {
   activityFileImportSchema,
   activityImportSchema,
+  heartCsvImportSchema,
+  heartImportSchema,
   recoveryImportSchema,
   sleepImportSchema,
   sleepCsvImportSchema,
@@ -123,6 +125,24 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const input = stressHeartCsvImportSchema.parse(req.body);
       const result = await importService.importStressHeartCsv(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/heart",
+    asyncRoute(async (req, res) => {
+      const input = heartImportSchema.parse(req.body);
+      const result = await importService.importHeart(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/heart-csv",
+    asyncRoute(async (req, res) => {
+      const input = heartCsvImportSchema.parse(req.body);
+      const result = await importService.importHeartCsv(input);
       res.status(201).json(result);
     })
   );
