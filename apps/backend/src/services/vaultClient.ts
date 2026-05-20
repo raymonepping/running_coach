@@ -1,5 +1,6 @@
 import type { AppEnv } from "../config/env.js";
 import { logger } from "./logger.js";
+import { vaultConfigured, vaultRequestsTotal } from "./metrics.js";
 
 interface VaultLoginResponse {
   auth?: {
@@ -21,8 +22,10 @@ export interface RuntimeSecrets {
 export async function loadVaultSecrets(env: AppEnv): Promise<RuntimeSecrets> {
   if (!env.VAULT_ADDR || !env.VAULT_BACKEND_ROLE_ID || !env.VAULT_BACKEND_SECRET_ID) {
     logger.warn("Vault AppRole credentials not provided; falling back to environment variables.");
+    vaultConfigured.set(0);
     return {};
   }
+  vaultConfigured.set(1);
 
   const loginResponse = await fetch(`${env.VAULT_ADDR}/v1/auth/approle/login`, {
     method: "POST",
@@ -34,8 +37,10 @@ export async function loadVaultSecrets(env: AppEnv): Promise<RuntimeSecrets> {
   });
 
   if (!loginResponse.ok) {
+    vaultRequestsTotal.inc({ operation: "approle_login", result: "failure" });
     throw new Error(`Vault AppRole login failed with ${loginResponse.status}`);
   }
+  vaultRequestsTotal.inc({ operation: "approle_login", result: "success" });
 
   const login = (await loginResponse.json()) as VaultLoginResponse;
   const token = login.auth?.client_token;
@@ -48,8 +53,10 @@ export async function loadVaultSecrets(env: AppEnv): Promise<RuntimeSecrets> {
   });
 
   if (!secretResponse.ok) {
+    vaultRequestsTotal.inc({ operation: "secret_read", result: "failure" });
     throw new Error(`Vault secret read failed with ${secretResponse.status}`);
   }
+  vaultRequestsTotal.inc({ operation: "secret_read", result: "success" });
 
   const secret = (await secretResponse.json()) as VaultSecretResponse;
   return {

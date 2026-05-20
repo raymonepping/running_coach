@@ -19,6 +19,7 @@ import { createBaseDocument } from "../domain/documents.js";
 import type { AuditEvent } from "../domain/types.js";
 import { ImportService } from "../services/importService.js";
 import { logger } from "../services/logger.js";
+import { metricsMiddleware, metricsRegistry, recommendationReviewsTotal } from "../services/metrics.js";
 
 export interface AppDependencies {
   store: DataStore;
@@ -61,10 +62,19 @@ export function createApp({ store, importService }: AppDependencies) {
   app.use(helmet());
   app.use(express.json({ limit: "8mb" }));
   app.use(pinoHttp({ logger }));
+  app.use(metricsMiddleware);
 
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", service: "running-coach-backend" });
   });
+
+  app.get(
+    "/metrics",
+    asyncRoute(async (_req, res) => {
+      res.header("Content-Type", metricsRegistry.contentType);
+      res.send(await metricsRegistry.metrics());
+    })
+  );
 
   app.post(
     "/api/import/activity",
@@ -182,6 +192,7 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const recommendation = await store.updateRecommendationStatus(req.params.id, "approved");
       await writeReviewAudit(store, recommendation.athlete_id, recommendation.id, "recommendation.approved");
+      recommendationReviewsTotal.inc({ status: "approved" });
       res.json(recommendation);
     })
   );
@@ -191,6 +202,7 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const recommendation = await store.updateRecommendationStatus(req.params.id, "rejected");
       await writeReviewAudit(store, recommendation.athlete_id, recommendation.id, "recommendation.rejected");
+      recommendationReviewsTotal.inc({ status: "rejected" });
       res.json(recommendation);
     })
   );

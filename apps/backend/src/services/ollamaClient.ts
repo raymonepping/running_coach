@@ -1,5 +1,6 @@
 import type { AthleteContext, Recommendation } from "../domain/types.js";
 import { logger } from "./logger.js";
+import { ollamaRequestDuration, ollamaRequestsTotal } from "./metrics.js";
 
 interface OllamaGenerateResponse {
   response?: string;
@@ -12,6 +13,7 @@ export class OllamaInsightGenerator {
   ) {}
 
   async summarize(context: AthleteContext, recommendation: Recommendation): Promise<string | undefined> {
+    const end = ollamaRequestDuration.startTimer();
     const prompt = [
       "You are a local running coach insight writer.",
       "Return only the final athlete-facing explanation in concise natural language.",
@@ -38,13 +40,19 @@ export class OllamaInsightGenerator {
 
       if (!response.ok) {
         logger.warn({ status: response.status }, "Ollama summary request failed.");
+        ollamaRequestsTotal.inc({ model: this.model, result: "http_error" });
+        end({ model: this.model, result: "http_error" });
         return undefined;
       }
 
       const data = (await response.json()) as OllamaGenerateResponse;
+      ollamaRequestsTotal.inc({ model: this.model, result: "success" });
+      end({ model: this.model, result: "success" });
       return data.response?.trim();
     } catch (error) {
       logger.warn({ error }, "Ollama unavailable; keeping deterministic explanation.");
+      ollamaRequestsTotal.inc({ model: this.model, result: "network_error" });
+      end({ model: this.model, result: "network_error" });
       return undefined;
     }
   }

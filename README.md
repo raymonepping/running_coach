@@ -15,6 +15,7 @@ This is not ChatGPT for runners. The primary workflow is event-driven: when acti
 - Uses Ollama locally for natural-language insight writing.
 - Uses HashiCorp Vault AppRole for backend identity and Vault KV for Couchbase credentials.
 - Enables Vault transit for encryption workflows.
+- Exposes Prometheus metrics and a Grafana ops dashboard for service health, agent runs, Ollama activity, and Vault client events.
 - Requires human approval before a recommendation is accepted.
 
 ## Start The Stack
@@ -39,6 +40,10 @@ Services:
 - Couchbase UI: http://localhost:8091
 - Vault: http://localhost:8200
 - Mailpit: http://localhost:8025
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001
+
+Grafana uses `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` from `.env`. The local defaults are in `.env.example`.
 
 ## Import Sample Data
 
@@ -104,6 +109,19 @@ npm test
 npm run lint
 npm run build
 ```
+
+## Observability
+
+The stack includes Grafana, Prometheus, Grafana Alloy, and a blackbox exporter.
+
+- Grafana dashboard: `Running Coach / Running Coach Ops`
+- Backend metrics: `http://localhost:8080/metrics`
+- Prometheus targets: `http://localhost:9090/targets`
+- Alloy UI and self-metrics: `http://localhost:12345`
+
+Prometheus stores metrics, not logs. The current implementation intentionally avoids centralizing raw container logs because athlete sleep, stress, heart-rate, and activity payloads should not leak into an operations log store. Backend metrics use event metadata only, such as import type, agent result, readiness state, model name, and Vault operation result.
+
+Log exploration can be added later with Loki or another log backend, but logs should stay structured and redacted, with IDs and event metadata only.
 
 ## Security Notes
 
