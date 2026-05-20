@@ -9,7 +9,9 @@ import {
   recoveryImportSchema,
   sleepImportSchema,
   sleepCsvImportSchema,
-  stressImportSchema
+  stressHeartCsvImportSchema,
+  stressImportSchema,
+  stressCsvImportSchema
 } from "../domain/schemas.js";
 import { createBaseDocument } from "../domain/documents.js";
 import type { AuditEvent } from "../domain/types.js";
@@ -103,6 +105,24 @@ export function createApp({ store, importService }: AppDependencies) {
     asyncRoute(async (req, res) => {
       const input = stressImportSchema.parse(req.body);
       const result = await importService.importStress(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/stress-csv",
+    asyncRoute(async (req, res) => {
+      const input = stressCsvImportSchema.parse(req.body);
+      const result = await importService.importStressCsv(input);
+      res.status(201).json(result);
+    })
+  );
+
+  app.post(
+    "/api/import/stress-heart-csv",
+    asyncRoute(async (req, res) => {
+      const input = stressHeartCsvImportSchema.parse(req.body);
+      const result = await importService.importStressHeartCsv(input);
       res.status(201).json(result);
     })
   );

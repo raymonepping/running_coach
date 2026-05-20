@@ -74,8 +74,14 @@ export class MemoryStore implements DataStore {
       .filter(({ item }) => item.athlete_id === athleteId)
       .sort((a, b) => {
         const byDate = b.item.created_at.localeCompare(a.item.created_at);
-        return byDate === 0 ? b.index - a.index : byDate;
+        if (byDate !== 0) return byDate;
+        const bySourcePeriodStart = sourcePeriodStart(b.item).localeCompare(sourcePeriodStart(a.item));
+        return bySourcePeriodStart === 0 ? b.index - a.index : bySourcePeriodStart;
       })
       .map(({ item }) => item);
   }
+}
+
+function sourcePeriodStart(item: BaseDocument): string {
+  return "source_period_start" in item && typeof item.source_period_start === "string" ? item.source_period_start : "";
 }

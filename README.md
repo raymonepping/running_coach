@@ -70,7 +70,15 @@ Garmin sleep CSV exports can be imported from the web UI:
 2. Choose a `.csv` file exported from Garmin sleep reports.
 3. The backend stores each CSV row as a `sleep` document, records source period metadata, writes an audit event, and runs the agent pipeline.
 
-Yearly, monthly, and seven-day Garmin summary exports are supported when they use the columns `Date`, `Avg Score`, `Avg Quality`, `Avg Duration`, `Avg Sleep Need`, `Avg Bedtime`, and `Avg Wake Time`. These exports are aggregate summaries, so detailed sleep-stage, HRV, SpO2, and overnight stress fields remain unavailable unless imported through richer sleep JSON later.
+The importer supports Garmin 1-day, 7-day, 4-week, monthly, and yearly sleep CSV exports. The 7-day and 4-week files are usually the best operational choice because they preserve daily score, resting heart rate, body battery, pulse ox, respiration, HRV, quality, duration, sleep need, bedtime, and wake time. The 1-day file is best when you want the richest single-night detail, including sleep stages, restless moments, overnight stress, and lowest SpO2. Yearly and monthly summary files are useful for trend history but are more aggregated.
+
+Garmin stress and heart-rate CSV exports can be imported from the web UI:
+
+1. Open http://localhost:5173/import/stress
+2. Use `Garmin stress CSV` for stress-only imports.
+3. Use `Stress + heart-rate CSV` when you have both exports. The backend joins rows by date, stores stress load plus resting/high heart rate, writes an audit event, and runs the agent pipeline.
+
+The paired import is the better coaching signal because it can distinguish ordinary stress distribution from stress combined with elevated resting heart-rate pressure.
 
 Then open:
 

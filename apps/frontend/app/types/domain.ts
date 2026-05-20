@@ -44,6 +44,16 @@ export interface StressRecord {
   overall_stress: number;
   rest_min: number;
   high_stress_min: number;
+  stress_load_min?: number;
+  high_stress_ratio?: number;
+  rest_ratio?: number;
+  resting_hr_bpm?: number;
+  high_hr_bpm?: number;
+  heart_rate_pressure?: string;
+  source_file_name?: string;
+  source_heart_file_name?: string;
+  source_format?: "csv";
+  source_date?: string;
 }
 
 export interface AgentFinding {

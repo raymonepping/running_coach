@@ -46,11 +46,35 @@ export function useCoachApi() {
     });
   }
 
+  async function importStressCsv(payload: { athlete_id: string; file_name: string; content: string }): Promise<void> {
+    await $fetch("/api/import/stress-csv", {
+      baseURL: apiBaseUrl,
+      body: payload,
+      method: "POST"
+    });
+  }
+
+  async function importStressHeartCsv(payload: {
+    athlete_id: string;
+    heart_content: string;
+    heart_file_name: string;
+    stress_content: string;
+    stress_file_name: string;
+  }): Promise<void> {
+    await $fetch("/api/import/stress-heart-csv", {
+      baseURL: apiBaseUrl,
+      body: payload,
+      method: "POST"
+    });
+  }
+
   return {
     fetchDashboard,
     importActivityFile,
     importRecord,
     importSleepCsv,
+    importStressHeartCsv,
+    importStressCsv,
     reviewRecommendation
   };
 }

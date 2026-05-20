@@ -10,6 +10,7 @@ import { runAgentPipeline, type InsightGenerator } from "../agents/agentPipeline
 import type { DataStore } from "../db/dataStore.js";
 import { parseActivityFile, type ActivityFileInput } from "./activityFileParser.js";
 import { parseSleepCsv, type SleepCsvInput } from "./sleepCsvParser.js";
+import { parseStressCsv, parseStressHeartCsv, type StressCsvInput, type StressHeartCsvInput } from "./stressCsvParser.js";
 
 export class ImportService {
   constructor(
@@ -71,6 +72,30 @@ export class ImportService {
     return this.runAutonomousAgents(input.athlete_id);
   }
 
+  async importStressCsv(input: StressCsvInput): Promise<AgentRunResult> {
+    const records = parseStressCsv(input);
+    await this.saveStressRecords(input.athlete_id, records);
+    await this.store.save("audit_events", {
+      ...createBaseDocument("audit_event", input.athlete_id, "system"),
+      action: "stress_csv.imported",
+      actor: "system",
+      detail: `Imported ${records.length} Garmin stress summary rows from ${input.file_name}.`
+    });
+    return this.runAutonomousAgents(input.athlete_id);
+  }
+
+  async importStressHeartCsv(input: StressHeartCsvInput): Promise<AgentRunResult> {
+    const records = parseStressHeartCsv(input);
+    await this.saveStressRecords(input.athlete_id, records);
+    await this.store.save("audit_events", {
+      ...createBaseDocument("audit_event", input.athlete_id, "system"),
+      action: "stress_heart_csv.imported",
+      actor: "system",
+      detail: `Imported ${records.length} Garmin stress rows enriched with heart-rate data from ${input.heart_file_name}.`
+    });
+    return this.runAutonomousAgents(input.athlete_id);
+  }
+
   async importRecovery(input: Omit<RecoverySnapshot, keyof ReturnType<typeof createBaseDocument>> & { athlete_id: string; source?: RecoverySnapshot["source"] }): Promise<AgentRunResult> {
     const document = {
       ...createBaseDocument("recovery_snapshot", input.athlete_id, input.source ?? "api"),
@@ -91,6 +116,20 @@ export class ImportService {
       await this.store.save("audit_events", event);
     }
     return result;
+  }
+
+  private async saveStressRecords(athleteId: string, records: Array<Omit<StressRecord, keyof ReturnType<typeof createBaseDocument>>>): Promise<void> {
+    for (const record of records) {
+      const document = {
+        ...createBaseDocument("stress", athleteId, "garmin_export"),
+        ...record
+      } as StressRecord;
+      if (record.source_date) {
+        document.created_at = toEndOfDayIso(record.source_date);
+        document.updated_at = document.created_at;
+      }
+      await this.store.save("stress_records", document);
+    }
   }
 }
 

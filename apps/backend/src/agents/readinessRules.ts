@@ -36,8 +36,9 @@ export function evaluateReadiness(context: AthleteContext): ReadinessDecision {
 
   const poorSleep = isPoor(latestSleep?.quality) || isNonRestorative(latestSleep?.summary);
   const highOvernightStress = isPoor(latestSleep?.stress_rating) || (latestSleep?.stress_avg ?? 0) >= 45;
-  const highDayStress = (latestStress?.overall_stress ?? 0) >= 45 || (latestStress?.high_stress_min ?? 0) >= 60;
+  const highDayStress = (latestStress?.overall_stress ?? 0) >= 45 || (latestStress?.high_stress_min ?? 0) >= 60 || (latestStress?.stress_load_min ?? 0) >= 360;
   const lowDayStress = (latestStress?.overall_stress ?? 100) <= 30 && (latestStress?.high_stress_min ?? 100) <= 20;
+  const heartPressure = latestStress?.heart_rate_pressure === "elevated_resting" || latestStress?.heart_rate_pressure === "elevated_resting_and_high_peak";
   const balancedHrv = latestSleep?.hrv_status.toLowerCase() === "balanced";
   const goodSleep = isGood(latestSleep?.quality) && !isNonRestorative(latestSleep?.summary);
   const injuryRisk = hasInjuryRisk(latestActivity);
@@ -57,6 +58,12 @@ export function evaluateReadiness(context: AthleteContext): ReadinessDecision {
   if (lowDayStress) {
     rationale.push("Daytime stress is controlled.");
   }
+  if (highDayStress) {
+    rationale.push("Daytime stress load is elevated.");
+  }
+  if (heartPressure) {
+    rationale.push("Resting heart rate pressure is elevated relative to recent recovery needs.");
+  }
   if (balancedHrv) {
     rationale.push("HRV status is balanced.");
   }
@@ -73,7 +80,7 @@ export function evaluateReadiness(context: AthleteContext): ReadinessDecision {
     };
   }
 
-  if (poorSleep && (highOvernightStress || highDayStress)) {
+  if ((poorSleep || heartPressure) && (highOvernightStress || highDayStress)) {
     return {
       readinessState: highDayStress ? "REST" : "RECOVER",
       rationale,

@@ -87,6 +87,18 @@ export const stressImportSchema = importEnvelopeSchema.extend({
   high_stress_min: z.number()
 });
 
+export const stressCsvImportSchema = importEnvelopeSchema.extend({
+  file_name: z.string().min(1),
+  content: z.string().min(1).max(2_000_000)
+});
+
+export const stressHeartCsvImportSchema = importEnvelopeSchema.extend({
+  stress_file_name: z.string().min(1),
+  stress_content: z.string().min(1).max(2_000_000),
+  heart_file_name: z.string().min(1),
+  heart_content: z.string().min(1).max(2_000_000)
+});
+
 export const recoveryImportSchema = importEnvelopeSchema.extend({
   readiness_state: z.enum(["BUILD", "MAINTAIN", "RECOVER", "REST"]).default("MAINTAIN"),
   subjective_readiness: z.enum(["low", "moderate", "high"]).optional(),

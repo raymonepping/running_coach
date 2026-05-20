@@ -49,7 +49,7 @@ async function reviewLatest(action: "approve" | "reject") {
     <MetricCard
       :detail="
         dashboard?.latestStress
-          ? `${dashboard.latestStress.high_stress_min} high-stress minutes, ${dashboard.latestStress.rest_min} rest minutes.`
+          ? `${dashboard.latestStress.stress_load_min ?? dashboard.latestStress.high_stress_min} medium/high minutes, ${dashboard.latestStress.rest_min} rest minutes${dashboard.latestStress.resting_hr_bpm ? `, resting HR ${dashboard.latestStress.resting_hr_bpm}.` : '.'}`
           : 'Import stress data to correlate adaptation pressure.'
       "
       label="Stress load"

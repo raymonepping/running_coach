@@ -110,7 +110,7 @@ export class CouchbaseStore implements DataStore {
       `SELECT item
        FROM ${this.path(collection)} AS item
        WHERE item.athlete_id = $athleteId
-       ORDER BY item.created_at DESC
+       ORDER BY item.created_at DESC, IFMISSINGORNULL(item.source_period_start, "") DESC, item.updated_at DESC
        LIMIT $limit`,
       { athleteId, limit }
     );

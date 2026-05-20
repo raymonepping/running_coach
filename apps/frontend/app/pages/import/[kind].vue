@@ -4,7 +4,7 @@ import { samplePayloads, type ImportKind } from "~/data/samplePayloads";
 
 const route = useRoute();
 const router = useRouter();
-const { importActivityFile, importRecord, importSleepCsv } = useCoachApi();
+const { importActivityFile, importRecord, importSleepCsv, importStressCsv, importStressHeartCsv } = useCoachApi();
 const { athleteId, loadDashboard } = useDashboardState();
 
 const validKinds: ImportKind[] = ["activity", "sleep", "stress", "recovery"];
@@ -36,6 +36,8 @@ const rawJson = ref("");
 const status = ref<string>();
 const error = ref<string>();
 const selectedFileName = ref<string>();
+const selectedStressFile = ref<File>();
+const selectedHeartFile = ref<File>();
 
 function resetSample() {
   rawJson.value = JSON.stringify(samplePayloads[kind.value], null, 2);
@@ -126,6 +128,80 @@ async function importSleepFile(event: Event) {
     input.value = "";
   }
 }
+
+async function importStressFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    error.value = "Choose a Garmin stress .csv file.";
+    status.value = undefined;
+    input.value = "";
+    return;
+  }
+
+  try {
+    selectedFileName.value = file.name;
+    await importStressCsv({
+      athlete_id: athleteId,
+      content: await file.text(),
+      file_name: file.name
+    });
+    await loadDashboard();
+    status.value = `${file.name} imported. Stress summaries were stored and autonomous agents have run.`;
+    error.value = undefined;
+  } catch (fileError) {
+    error.value = fileError instanceof Error ? fileError.message : "Stress CSV import failed.";
+    status.value = undefined;
+  } finally {
+    input.value = "";
+  }
+}
+
+function selectStressPairFile(event: Event, target: "stress" | "heart") {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    error.value = "Choose CSV files for stress and heart rate.";
+    status.value = undefined;
+    input.value = "";
+    return;
+  }
+
+  if (target === "stress") {
+    selectedStressFile.value = file;
+  } else {
+    selectedHeartFile.value = file;
+  }
+  error.value = undefined;
+}
+
+async function importStressHeartFiles() {
+  if (!selectedStressFile.value || !selectedHeartFile.value) {
+    error.value = "Choose both a stress CSV and a heart-rate CSV.";
+    status.value = undefined;
+    return;
+  }
+
+  try {
+    await importStressHeartCsv({
+      athlete_id: athleteId,
+      heart_content: await selectedHeartFile.value.text(),
+      heart_file_name: selectedHeartFile.value.name,
+      stress_content: await selectedStressFile.value.text(),
+      stress_file_name: selectedStressFile.value.name
+    });
+    await loadDashboard();
+    status.value = `${selectedStressFile.value.name} and ${selectedHeartFile.value.name} imported. Stress was enriched with heart-rate pressure and autonomous agents have run.`;
+    error.value = undefined;
+  } catch (fileError) {
+    error.value = fileError instanceof Error ? fileError.message : "Stress and heart-rate import failed.";
+    status.value = undefined;
+  }
+}
 </script>
 
 <template>
@@ -150,7 +226,7 @@ async function importSleepFile(event: Event) {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div class="font-semibold text-neutral-950">Garmin sleep CSV</div>
-            <p class="mt-1 text-sm leading-6 text-neutral-700">Import Garmin sleep summary CSV exports. Yearly, monthly, and 7-day exports are accepted when they use the Garmin summary columns.</p>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Import Garmin sleep CSV exports. 1-day, 7-day, 4-week, monthly, and yearly reports are accepted.</p>
             <p v-if="selectedFileName" class="mt-2 text-sm font-semibold text-orange-800">{{ selectedFileName }}</p>
           </div>
           <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800">
@@ -158,6 +234,41 @@ async function importSleepFile(event: Event) {
             Choose CSV
             <input class="sr-only" type="file" accept=".csv,text/csv" @change="importSleepFile">
           </label>
+        </div>
+      </div>
+      <div v-if="kind === 'stress'" class="mb-5 rounded-lg border border-orange-200 bg-orange-50 p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div class="font-semibold text-neutral-950">Garmin stress CSV</div>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Import Garmin stress CSV exports with daily stress levels and time distribution.</p>
+            <p v-if="selectedFileName" class="mt-2 text-sm font-semibold text-orange-800">{{ selectedFileName }}</p>
+          </div>
+          <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800">
+            <UploadCloud :size="18" />
+            Choose CSV
+            <input class="sr-only" type="file" accept=".csv,text/csv" @change="importStressFile">
+          </label>
+        </div>
+      </div>
+      <div v-if="kind === 'stress'" class="mb-5 rounded-lg border border-orange-200 bg-orange-50 p-4">
+        <div class="flex flex-col gap-4">
+          <div>
+            <div class="font-semibold text-neutral-950">Stress + heart-rate CSV</div>
+            <p class="mt-1 text-sm leading-6 text-neutral-700">Join daily stress with resting and high heart rate by date for better recovery-pressure detection.</p>
+          </div>
+          <div class="grid gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-center">
+            <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-neutral-950 ring-1 ring-orange-200 transition hover:bg-orange-100">
+              <UploadCloud :size="18" />
+              {{ selectedStressFile?.name ?? "Stress CSV" }}
+              <input class="sr-only" type="file" accept=".csv,text/csv" @change="selectStressPairFile($event, 'stress')">
+            </label>
+            <label class="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-neutral-950 ring-1 ring-orange-200 transition hover:bg-orange-100">
+              <UploadCloud :size="18" />
+              {{ selectedHeartFile?.name ?? "Heart CSV" }}
+              <input class="sr-only" type="file" accept=".csv,text/csv" @change="selectStressPairFile($event, 'heart')">
+            </label>
+            <ActionButton @click="importStressHeartFiles">Import pair</ActionButton>
+          </div>
         </div>
       </div>
       <textarea

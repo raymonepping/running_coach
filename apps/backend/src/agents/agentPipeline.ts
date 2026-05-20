@@ -106,14 +106,17 @@ export async function runAgentPipeline(
   }
 
   if (context.latestStress) {
+    const heartDetail = context.latestStress.resting_hr_bpm
+      ? ` Resting heart rate was ${context.latestStress.resting_hr_bpm} bpm, daily high was ${context.latestStress.high_hr_bpm ?? 0} bpm, and heart pressure classified as ${context.latestStress.heart_rate_pressure ?? "unknown"}.`
+      : "";
     findings.push(
       finding(
         context,
         "Stress Correlation Agent",
         context.latestStress.overall_stress <= 30 ? "info" : "watch",
         "Stress load correlated",
-        `Day stress averaged ${context.latestStress.overall_stress}, with ${context.latestStress.high_stress_min} high-stress minutes.`,
-        ["overall_stress", "high_stress_min"]
+        `Day stress averaged ${context.latestStress.overall_stress}, with ${context.latestStress.high_stress_min} high-stress minutes and ${context.latestStress.stress_load_min ?? context.latestStress.medium_stress_min + context.latestStress.high_stress_min} combined medium/high minutes.${heartDetail}`,
+        ["overall_stress", "high_stress_min", "stress_load_min", "resting_hr_bpm", "high_hr_bpm"]
       )
     );
   }
