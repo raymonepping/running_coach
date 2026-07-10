@@ -10,6 +10,12 @@ services:
       COUCHBASE_ADMINISTRATOR_PASSWORD: ${COUCHBASE_ADMINISTRATOR_PASSWORD:-local-demo-password}
     volumes:
       - couchbase_data:/opt/couchbase/var
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     healthcheck:
       test:
         [
